@@ -1,37 +1,15 @@
-/*/*******************************************************************************
-**                                                                            **
-**                     Jiedi(China nanjing)Ltd.                               **
-**	               ´´½¨£º¶¡ËÎÌÎ ÏÄ²Ü¿¡£¬´Ë´úÂë¿ÉÓÃ×÷ÎªÑ§Ï°²Î¿¼                **
-*******************************************************************************/
 
-/*****************************FILE INFOMATION***********************************
-**
-** Project       :c++ÊµÕ½Çø¿éÁ´ºËĞÄÃÜÂëÑ§-»ùÓÚopenssl
-** Contact       : xiacaojun@qq.com
-**  ²©¿Í   : http://blog.csdn.net/jiedichina
-**	ÊÓÆµ¿Î³Ì : ÍøÒ×ÔÆ¿ÎÌÃ	http://study.163.com/u/xiacaojun		
-			   ÌÚÑ¶¿ÎÌÃ		https://jiedi.ke.qq.com/				
-			   csdnÑ§Ôº               http://edu.csdn.net/lecturer/lecturer_detail?lecturer_id=961	
-**             51ctoÑ§Ôº              http://edu.51cto.com/lecturer/index/user_id-12016059.html	
-** 			   ÀÏÏÄ¿ÎÌÃ		http://www.laoxiaketang.com 
-**                 
-**  c++ÊµÕ½Çø¿éÁ´ºËĞÄÃÜÂëÑ§-»ùÓÚopenssl   ¿Î³ÌÈº £º1064420127¼ÓÈëÈºÏÂÔØ´úÂëºÍÑ§Ô±½»Á÷
-**                           Î¢ĞÅ¹«ÖÚºÅ  : jiedi2007
-**		Í·ÌõºÅ	 : ÏÄ²Ü¿¡
-**
-*****************************************************************************
-//£¡£¡£¡£¡£¡£¡£¡£¡£¡c++ÊµÕ½Çø¿éÁ´ºËĞÄÃÜÂëÑ§-»ùÓÚopenssl ¿Î³Ì  QQÈº£º1064420127ÏÂÔØ´úÂëºÍÑ§Ô±½»Á÷*/
 
 #include<iostream>
 using namespace std;
 ////////////////////////////////////////////////////
-/// ¶Ô³Æ¼Ó½âÃÜÊı¾İ
-/// @para data ÊäÈëÊı¾İ
-/// @para data_size ÊäÈëÊı¾İ´óĞ¡
-/// @para out Êä³öÊı¾İ
-/// @para pass ÃØÔ¿
-/// @para pass_size ÃØÔ¿³¤¶È
-/// @return ¼Ó½âÃÜºóÊı¾İ´óĞ¡
+/// å¯¹ç§°åŠ è§£å¯†æ•°æ®
+/// @para data è¾“å…¥æ•°æ®
+/// @para data_size è¾“å…¥æ•°æ®å¤§å°
+/// @para out è¾“å‡ºæ•°æ®
+/// @para pass ç§˜é’¥
+/// @para pass_size ç§˜é’¥é•¿åº¦
+/// @return åŠ è§£å¯†åæ•°æ®å¤§å°
 #define XOR_BLOCK 8
 int XorCipher(const unsigned char*data,int data_size,
     unsigned char *out,
@@ -40,17 +18,17 @@ int XorCipher(const unsigned char*data,int data_size,
     )
 {
     static const char iv[] = "abcdefgh";
-    //³õÊ¼»¯ÃØÔ¿
+    //åˆå§‹åŒ–ç§˜é’¥
     auto p = *(unsigned long long*)iv;
     cout << iv << ":" << endl;
     cout << p << ":" << endl;
-    //ÃØÔ¿²¹È«£¬²¢ÇÒÒì»ò³õÊ¼»¯ÏòÁ¿
-    //ÃØÔ¿Ğ¡ÓÚ XOR_BLOCK »òÕß´óÓÚ XOR_BLOCK
+    //ç§˜é’¥è¡¥å…¨ï¼Œå¹¶ä¸”å¼‚æˆ–åˆå§‹åŒ–å‘é‡
+    //ç§˜é’¥å°äº XOR_BLOCK æˆ–è€…å¤§äº XOR_BLOCK
     for (int i = 0; i < pass_size; i += XOR_BLOCK)
     {
         unsigned long long tmp = 0;
         int size = XOR_BLOCK;
-        ///ÃØÔ¿Ğ¡ÓÚ XOR_BLOCK 
+        ///ç§˜é’¥å°äº XOR_BLOCK 
         if (pass_size - i < XOR_BLOCK)
         {
             size = pass_size - i;
@@ -61,24 +39,24 @@ int XorCipher(const unsigned char*data,int data_size,
     cout << p << ":" << endl;
 
 
-    //Êı¾İÔ´×ª»»³É8×Ö½ÚÊı¾İÀàĞÍ
+    //æ•°æ®æºè½¬æ¢æˆ8å­—èŠ‚æ•°æ®ç±»å‹
     auto d = (unsigned long long*)data;
-    //Êä³öÊı¾İ
+    //è¾“å‡ºæ•°æ®
     auto o = (unsigned long long*) out;
-    //Êı¾İ·Ö×é´¦Àí
+    //æ•°æ®åˆ†ç»„å¤„ç†
     int i = 0;
     for ( ;i < data_size / XOR_BLOCK; i++)
     {
-        //XOR Òì»òÔËËã
+        //XOR å¼‚æˆ–è¿ç®—
         o[i] = (d[i] ^ p);
     }
-    //ÊäÈëÊı¾İµÄ²¹³ä ZERO
+    //è¾“å…¥æ•°æ®çš„è¡¥å…… ZERO
     /*
         block = 8
         12345678 9
         12345678 90000000  ZERO
         12345678 97777777   PKCS7 
-        Ñ§Ô±ÊµÏÖ PKCS7
+        å­¦å‘˜å®ç° PKCS7
     */
     int mod = data_size % XOR_BLOCK;
     if (mod != 0)
@@ -93,7 +71,7 @@ int XorCipher(const unsigned char*data,int data_size,
 }
 int main(int argc, char* argv[])
 {
-    unsigned char data[] = "²âÊÔ¼Ó½âÃÜÊı¾İTEST123²âÊÔÃØÔ¿";
+    unsigned char data[] = "æµ‹è¯•åŠ è§£å¯†æ•°æ®TEST123æµ‹è¯•ç§˜é’¥";
     unsigned char out[1024] = { 0 };
     unsigned char out2[1024] = { 0 };
     unsigned char pass[] = "12345678";
