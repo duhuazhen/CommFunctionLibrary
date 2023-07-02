@@ -1,0 +1,208 @@
+/*/*******************************************************************************
+**                                                                            **
+**                     Jiedi(China nanjing)Ltd.                               **
+**	               创建：丁宋涛 夏曹俊，此代码可用作为学习参考                **
+*******************************************************************************/
+
+/*****************************FILE INFOMATION***********************************
+**
+** Project       :c++实战区块链核心密码学-基于openssl
+** Contact       : xiacaojun@qq.com
+**  博客   : http://blog.csdn.net/jiedichina
+**	视频课程 : 网易云课堂	http://study.163.com/u/xiacaojun		
+			   腾讯课堂		https://jiedi.ke.qq.com/				
+			   csdn学院               http://edu.csdn.net/lecturer/lecturer_detail?lecturer_id=961	
+**             51cto学院              http://edu.51cto.com/lecturer/index/user_id-12016059.html	
+** 			   老夏课堂		http://www.laoxiaketang.com 
+**                 
+**  c++实战区块链核心密码学-基于openssl   课程群 ：1064420127加入群下载代码和学员交流
+**                           微信公众号  : jiedi2007
+**		头条号	 : 夏曹俊
+**
+*****************************************************************************
+//！！！！！！！！！c++实战区块链核心密码学-基于openssl 课程  QQ群：1064420127下载代码和学员交流*/
+#include <iostream>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <fstream>
+
+// _CRT_SECURE_NO_WARNINGS
+//#include <openssl/applink.c>
+using namespace std;
+
+bool EncryptFile(string passwd, string in_filename, string out_filename,bool is_enc)
+{
+    //选择加解密算法，后面可以替换
+    auto cipher = EVP_des_ede3_cbc();
+
+    //输入文件大小
+    int in_file_size = 0;
+
+    //输出文件大小
+    int out_file_size = 0;
+    ifstream ifs(in_filename, ios::binary); //二进制打开输入文件
+    if (!ifs)return false;
+    ofstream ofs(out_filename, ios::binary);//二进制大小输出文件
+    if (!ofs)
+    {
+        ifs.close();
+        return false;
+    }
+    auto ctx = EVP_CIPHER_CTX_new(); //加解密上下文
+
+    //密钥初始化 多出的丢弃
+    unsigned char key[128] = { 0 };
+    int key_size = EVP_CIPHER_key_length(cipher);// 获取密钥长度
+    if (key_size > passwd.size())   //密码少了
+    {
+        key_size = passwd.size();
+    }
+    memcpy(key, passwd.data(), key_size);
+
+    unsigned char iv[128] = { 0 }; //初始化向量
+    int re = EVP_CipherInit(ctx, cipher, key, iv, is_enc);
+    if (!re)
+    {
+        ERR_print_errors_fp(stderr);
+        ifs.close();
+        ofs.close();
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+    unsigned char buf[1024] = { 0 };
+    unsigned char out[1024] = { 0 };
+    int out_len = 0;
+    //1 读文件=》2 加解密文件=》3写入文件
+    while (!ifs.eof())
+    {
+        //1 读文件
+        ifs.read((char*)buf, sizeof(buf));
+        int count = ifs.gcount();
+        if (count <= 0)break;
+        in_file_size += count; //统计读取文件大小
+        //2 加解密文件 机密到out
+        EVP_CipherUpdate(ctx, out, &out_len, buf, count);
+        if (out_len <= 0)break;
+        //3 写入文件
+        ofs.write((char*)out, out_len);
+        out_file_size += out_len;
+    }
+    //取出最后一块数据
+    EVP_CipherFinal(ctx, out, &out_len);
+    if (out_len > 0)
+    {
+        ofs.write((char*)out, out_len);
+        out_file_size += out_len;
+    }
+
+    ifs.close();
+    ofs.close();
+    EVP_CIPHER_CTX_free(ctx);
+    cout << "in_file_size:" << in_file_size << endl;
+    cout << "out_file_size:" << out_file_size << endl;
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+ 
+    //加密文件
+    EncryptFile("12345678", 
+        "test_evp_cipher.cpp", 
+        "test_evp_cipher.encrypt.txt",
+        true);
+    
+    //解密文件
+    EncryptFile("12345678", 
+        "test_evp_cipher.encrypt.txt", 
+        "test_evp_cipher.decrypt.txt", 
+        false);
+    
+    const unsigned char data[128] = "12345678123456781";//输入
+    int data_size = strlen((char*)data);
+    cout << "data_size = " << data_size << endl;
+    unsigned char out[1024] = { 0 };                //输出
+    unsigned char key[128] = "12345678901234567890";//秘钥
+    unsigned char iv[128] = { 0 };                  //初始化向量
+    //三重DES 3DES 算法
+    auto cipher = EVP_des_ede3_cbc();
+    //error:digital envelope routines:EVP_CipherInit_ex:initialization error
+    //auto cipher = EVP_des_cbc();
+
+    //获取算法的分组大小（）
+    int block_size = EVP_CIPHER_block_size(cipher);
+    int key_size = EVP_CIPHER_key_length(cipher);
+    int iv_size = EVP_CIPHER_iv_length(cipher);
+    cout << "block_size = " << block_size << endl;
+    cout << "key_size = " << key_size << endl;
+    cout << "iv_size = " << iv_size << endl;
+
+    //加解密上下文
+    auto ctx = EVP_CIPHER_CTX_new();
+    //加密算法初始化
+    int re = EVP_CipherInit(ctx, cipher, key, iv,
+        1  //1 表示加密
+    );
+    if (!re)
+    {
+        ERR_print_errors_fp(stderr);
+        getchar();
+        return -1;
+    }
+    cout << "EVP_CipherInit success！" << endl;
+
+    //默认 PKCS7 补充大小 EVP_PADDING_PKCS7
+    //关闭自动填充
+    //EVP_CIPHER_CTX_set_padding(ctx, 0);
+    EVP_CIPHER_CTX_set_padding(ctx, EVP_PADDING_PKCS7);
+    int out_size = 0;
+
+    //只处理分组大小得到数据,如果取消自动填充，多余数据丢弃
+    // 如果自动填充，则在EVP_CipherFinal 中获取数据
+    EVP_CipherUpdate(ctx,
+        out,           //输出
+        &out_size,     //输出数据大小
+        data,          //输入数据
+        data_size
+    );
+
+    cout << "EVP_CipherUpdate size:" << out_size << endl;
+    //取出最后一块数据（需要填充的），或者是padding补充的数据
+    int padding_size = 0;
+    EVP_CipherFinal(ctx, out + out_size, &padding_size);
+    cout << "padding_size = " << padding_size << endl;
+    out_size += padding_size;
+    cout << out_size << ":" << out << endl;
+
+    //////////////////////////////////////////////////////////////////
+    /// 解密数据 使用原来的ctx
+    re = EVP_CipherInit(ctx, cipher, key, iv, 
+        0 //0表示解密
+    );
+    if (!re)
+    {
+        ERR_print_errors_fp(stderr);
+    }
+
+    //解密密文后存放的明文
+    unsigned char out2[1024] = { 0 };
+    int out2_size = 0;
+    //解密数据 填充数据取不到
+    EVP_CipherUpdate(ctx,
+        out2, &out2_size, //输入密文数据
+        out, out_size);   //输出解密后明文
+    cout << "EVP_CipherUpdate out2_size = " << out2_size << endl;
+
+    //取出填充数据
+    EVP_CipherFinal(ctx, out2 + out2_size, &padding_size);
+    cout << "EVP_CipherFinal padding_size=" << padding_size << endl;
+    out2_size += padding_size;
+    cout << out2_size << ":" << out2 << "|" << endl;
+
+
+    //释放上下文
+    EVP_CIPHER_CTX_free(ctx);
+
+    getchar();
+    return 0;
+}
